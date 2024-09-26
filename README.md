@@ -25,3 +25,7 @@ Debug mode will host TurTur on localhost, without HTTPS.
 - There is no easy way to replace the domain being used by the server, it is currently hardcoded to: `https://turtur.ddns.net`
 - There is also no easy way to replace what HTTPS certificates are being used, currently hardcoded to: `/etc/letsencrypt/live/turtur.ddns.net/`
  
+
+## Artwork
+
+Artwork in the /images directory is made by SmileZ: https://www.instagram.com/theclowntoon/
