@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <link rel="stylesheet" href="http://localhost:3030/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .no-fouc {
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body class="no-fouc">
+<div class="container">
+    <!-- User Bar -->
+    <div class="user-bar">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <img class="logo" src="http://localhost:3030/images/success.png" alt="TurTur Logo">
+            <h1>TurTur</h1>
+        </div>
+
+        <!-- User List -->
+        <h2>Users</h2>
+        <div id="users-list">
+            <div class="user online">
+                <p>TurTur</p>
+                <span class="user-status"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Room Bar -->
+        <div class="room-bar" id="room-bar">
+        </div>
+
+        <button class="manage-button" id="create-room-button"><i class="fas fa-plus"></i></button>
+        <button class="manage-button" id="settings-button"><i class="fas fa-cog"></i></button>
+
+        <!-- popup for a create room confirmation and ask for name  -->
+        <div class="popup" id="create-room-popup">
+            <div class="popup-content">
+                <h2>Create Room</h2>
+                <input type="text" id="room-name" placeholder="Room Name">
+                <button id="create-room">Create</button>
+                <button id="cancel-create-room">Cancel</button>
+            </div>
+        </div>
+
+        <!-- popup for a user nickname configuration and add users to current room  -->
+        <div class="popup" id="settings-popup">
+            <div class="popup-content">
+
+                <button id="close-settings" class="popup-close"><i class="fas fa-times"></i></button>
+
+                <h2>User Settings</h2>
+                <input type="text" id="user-nickname-input" placeholder="Nickname">
+                <button id="set-nickname">Set</button>
+                <br>
+                <button id="logout">Logout</button>
+                <button id="delete-account">Delete Account</button>
+
+
+                <h2>Room Management</h2>
+                <h2>Current Room: <span id="current-room-name">Not Connected to a Room</span></h2>
+                <h2>Add User</h2>
+                <input type="text" id="add-user" placeholder="Username">
+                <div id="add-user-dropdown" class="dropdown-content"></div>
+                <button id="add-user-to-room">Add</button>
+
+                <h2>Remove User</h2>
+                <input type="text" id="remove-user" placeholder="Username">
+                <div id="remove-user-dropdown" class="dropdown-content"></div>
+                <button id="remove-user-from-room">Remove</button>
+
+            </div>
+        </div>
+
+        <!-- Delete Account Confirmation Popup -->
+        <div class="popup" id="delete-account-popup">
+            <div class="popup-content">
+                <h2>Are you sure?</h2>
+                <p>Do you really want to delete your account? This action cannot be undone.</p>
+                <button id="confirm-delete-account">Yes, Delete</button>
+                <button id="cancel-delete-account">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Disconnected popup, request user to reload -->
+        <div class="popup" id="disconnected-popup">
+            <div class="popup-content">
+                <h2>Disconnected</h2>
+                <p>It seems you have been disconnected from the server. Please reload the page to reconnect.</p>
+                <p>If this continues, you may need to log in again.</p>
+                <button id="reload-page">Reload</button>
+            </div>
+        </div>
+
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chat-window">
+            <div class="chat-message">
+                <img src="http://localhost:3030/favicon.ico" alt="User Icon">
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="username">TurTur</span>
+
+                    </div>
+                    <p>Welcome to TurTur! Click on a server above, or create a new one.</p>
+                </div>
+                <span class="timestamp">:)</span>
+            </div>
+            <div class="chat-message">
+                <img src="http://localhost:3030/favicon.ico" alt="User Icon">
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="username">TurTur</span>
+
+                    </div>
+                    <p>If there are no servers, check the console for errors or contact the administrator.</p>
+                </div>
+                <span class="timestamp">:)</span>
+            </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="input-bar">
+            <input id="message" type="text" placeholder="Type your message...">
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="http://localhost:3030/js/app.js"></script>
+</body>
+</html>

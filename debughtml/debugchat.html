@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>TurTur App Debug Page</title>
+    <style>
+        #server-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .server-button {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+        }
+        .server-button:hover {
+            background-color: #ddd;
+        }
+        #chat {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>TurTur Debugging/Development Page</h2>
+    <div id="server-buttons"></div>
+    <div id="chat"></div>
+    <button id="login">Login</button>
+    <button id="getMoreMessages">getMoreMessages</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <input type="text" id="message" placeholder="Enter a message">
+
+    <script>
+
+        const sessionId = "BananaBananaBananaBananaBananaBanana"; // First 36 bytes is the session ID
+        const encryptionKey = "BananaBananaBananaBananaBananaBa"; // Encryption key
+        const userId = "BananaBananaBana"; // User ID given by auth server
+
+        // Create WebSocket connection.
+        const socket = new WebSocket('ws://127.0.0.1:3030/ws');
+
+        let connected = false;  // Flag to indicate if the client is connected to the server
+        let knownMessages = 0;  // Number of messages the client has received from the server for currently open chat room
+        let currentRoom = 0;  // The current room id the client is connected to
+
+        socket.addEventListener('open', function (event) {
+                connected = true;
+            });
+
+        // Listen for messages
+        socket.onmessage = async function(event) {
+            if (event.data instanceof Blob) {
+                try {
+                    // Convert the Blob to ArrayBuffer
+                    const arrayBuffer = await event.data.arrayBuffer();
+                    
+                    // Create a Uint8Array from the ArrayBuffer
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    
+                    console.log('Received binary data as Uint8Array:', uint8Array);
+                    // Convert to string
+                    const text = new TextDecoder().decode(uint8Array);
+                    console.log('Received binary data as string:', text);
+
+                    // First 36 bytes is the session ID
+                    const sessionId = text.slice(0, 36);
+                    console.log('Session ID:', sessionId);
+
+                    // Ensure the session ID matches the one we sent
+                    if (sessionId !== sessionId) {
+                        console.error('Session ID mismatch');
+                        return;
+                    }
+
+                    // Remaining bytes is the encrypted data
+                    const remaining = decryptData(uint8Array.slice(36), encryptionKey);
+
+                    // First 16 bytes is the user ID
+                    const userIdBytes = remaining.slice(0, 16);
+                    const userId = new TextDecoder().decode(userIdBytes);
+                    console.log('User ID:', userId);
+
+                    // Ensure the user ID matches the one we sent
+                    if (userId !== userId) {
+                        console.error('User ID mismatch');
+                        return;
+                    }
+
+                    // Remaining bytes is the message
+                    const messageBytes = remaining.slice(16);
+                    
+                    // Handle the packet
+                    handlePacket(messageBytes);
+
+                    
+                } catch (error) {
+                    console.error('Error processing Blob:', error);
+                }
+            } else {
+                console.log('Received non-binary data:', event.data);
+            }
+        };
+
+
+        // when the user clicks the send button
+        document.getElementById('login').addEventListener('click', function() {
+
+            sendTTPP(0); // Send a TTPP client hello (type 0)
+
+        });
+
+        document.getElementById('getMoreMessages').addEventListener('click', function() {
+
+            getMoreMessages();
+
+        });
+
+        document.getElementById('message').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                const message = event.target.value;
+                event.target.value = '';
+                sendChatMessage(message);
+            }
+        });
+
+        function stringToByteArray(str) {
+            const encoder = new TextEncoder(); // Using UTF-8 encoding
+            return encoder.encode(str);
+        }
+
+
+        function sendTTPP(type, data = '') {
+
+            let sessionIdBytes = stringToByteArray(sessionId);
+            let userIdBytes = stringToByteArray(userId);
+            let packetTypeBytes = stringToByteArray(type);
+            let dataBytes = stringToByteArray(data);
+
+            let encrypted_payload = encryptData(concatenateByteArrays(userIdBytes, packetTypeBytes, dataBytes), encryptionKey);
+
+            let packet = concatenateByteArrays(sessionIdBytes, encrypted_payload);
+
+            if (connected) {
+                socket.send(packet);
+            } else {
+                console.error('Not connected to server');
+            }
+        }
+
+
+        function encryptData(data, key) {
+            // Convert packet to a CryptoJS WordArray
+            const packetWordArray = CryptoJS.lib.WordArray.create(data);
+            
+            // Convert the key to a CryptoJS WordArray
+            const keyWordArray = CryptoJS.enc.Utf8.parse(key);
+
+            // Encrypt the packet using AES-256-ECB
+            const encrypted = CryptoJS.AES.encrypt(packetWordArray, keyWordArray, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.NoPadding, // Ensure no padding is applied
+            });
+
+            // Convert the encrypted data back to a Uint8Array
+            return Uint8Array.from(encrypted.ciphertext.words.flatMap(word => [
+                (word >> 24) & 0xFF,
+                (word >> 16) & 0xFF,
+                (word >> 8) & 0xFF,
+                word & 0xFF
+            ]));
+        }
+
+        function decryptData(data, key) {
+            // Convert packet to a CryptoJS WordArray
+            const packetWordArray = CryptoJS.lib.WordArray.create(data);
+
+            // Convert the key to a CryptoJS WordArray
+            const keyWordArray = CryptoJS.enc.Utf8.parse(key);
+
+            // Decrypt the packet using AES-256-ECB
+            const decrypted = CryptoJS.AES.decrypt({ ciphertext: packetWordArray }, keyWordArray, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            // Convert decrypted WordArray to a hexadecimal string
+            const decryptedHex = decrypted.toString(CryptoJS.enc.Hex);
+
+            // Convert hexadecimal string to a Uint8Array
+            const byteArray = new Uint8Array(decryptedHex.length / 2);
+            for (let i = 0; i < decryptedHex.length; i += 2) {
+                byteArray[i / 2] = parseInt(decryptedHex.substr(i, 2), 16);
+            }
+
+            return byteArray;
+        }
+        
+        function concatenateByteArrays(...arrays) {
+            // Calculate the total length of all arrays
+            let totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+
+            // Create a new Uint8Array with the total length
+            let result = new Uint8Array(totalLength);
+
+            // Set each array into the result
+            let offset = 0;
+            for (let arr of arrays) {
+                result.set(arr, offset);
+                offset += arr.length;
+            }
+
+            return result;
+        }
+
+        function handlePacket(packet){
+
+            // First byte is the packet type
+            const packetType = packet[0];
+            console.log('Packet type:', packetType);
+
+            // Remaining bytes is the message
+            const messageBytes = packet.slice(1);
+
+
+            const data = new TextDecoder().decode(messageBytes);
+            //console.log(data);
+
+            switch (packetType) {
+                case 1:
+                    // Process server list
+                    try {
+                        const { servers } = JSON.parse(data);
+                        displayServerList(servers);
+                    } catch (error) {
+                        console.error('Error parsing server list:', error);
+                    }
+                    break;
+                case 3: 
+                    // Process server messages
+                    try {
+                        const { messages, server_id } = JSON.parse(data);
+                        displayMessages(messages, server_id != currentRoom);
+                        currentRoom = server_id;
+                    } catch (error) {
+                        console.error('Error parsing server messages:', error);
+                    }
+                    break;
+                case 5:
+                    // Process received message
+                    try {
+                        const message = JSON.parse(data);
+                        receivedMessage(message);
+                    } catch (error) {
+                        console.error('Error parsing received message:', error);
+                    }
+                    break;
+                default:
+                    // Handle other packet types
+                    console.log('Unhandled packet type:', packetType);
+                    break;
+            }
+        }
+
+        function displayServerList(servers) {
+            const serverButtonsContainer = document.getElementById('server-buttons');
+            serverButtonsContainer.innerHTML = ''; // Clear previous buttons
+
+            servers.forEach(server => {
+                const button = document.createElement('button');
+                button.className = 'server-button';
+                button.textContent = server.name;
+                button.addEventListener('click', () => {
+                    if (server.id === currentRoom) {
+                        return;
+                    }
+                    requestServerMessages(server.id);
+                });
+                serverButtonsContainer.appendChild(button);
+            });
+        }
+
+        function requestServerMessages(server_id, known_messages = 0) {
+            
+            const data = JSON.stringify({ server_id, known_messages });
+
+            console.log(data);
+
+            sendTTPP(2, data); // Send a TTPP Message Request (type 2)
+
+        }
+
+        function displayMessages(messages, clear) {
+
+            const chat = document.getElementById('chat');
+
+            if (clear) {
+                // Clear the chat by removing all children
+                while (chat.firstChild) {
+                    chat.removeChild(chat.firstChild);
+                }
+                knownMessages = 0;
+            }
+
+            let previousScrollHeight = chat.scrollHeight;
+            let previousScrollTop = chat.scrollTop;
+
+            // Only calculate the scroll offset if not clearing the chat
+            let scrollOffset = clear ? 0 : previousScrollHeight - previousScrollTop;
+
+            // Add new messages at the top
+            messages.forEach(message => {
+                const li = document.createElement('li');
+                li.textContent = `NUM:${message.id}. ${message.timestamp} - ${message.userident}: ${message.message}`;
+                chat.prepend(li);
+            });
+            knownMessages += messages.length;
+
+            if (clear) {
+                // Scroll to the bottom if chat was cleared
+                chat.scrollTop = chat.scrollHeight;
+            } else {
+                // Keep the current scroll position
+                chat.scrollTop = chat.scrollHeight - scrollOffset;
+            }
+        }
+
+        function getMoreMessages() {
+            console.log('Getting more messages, currentRoom:', currentRoom, 'knownMessages:', knownMessages);
+            requestServerMessages(currentRoom, knownMessages);
+        }
+
+        function sendChatMessage(message) {
+            if (currentRoom === 0) {
+                console.error('No chat room selected');
+                return;
+            }
+            const data = JSON.stringify({ server_id: currentRoom, message });
+            sendTTPP(4, data); // Send a TTPP Message Send (type 4)
+        }
+
+        function receivedMessage(message) {
+            if (message.server_id != currentRoom) {
+                console.log('Received message for different chat room:', message.server_id);
+                return;
+            }
+            const chat = document.getElementById('chat');
+            const li = document.createElement('li');
+            li.textContent = `NUM:${message.id}. ${message.timestamp} - ${message.userident}: ${message.message}`;
+            chat.appendChild(li);
+
+            // If the user is scrolled to the bottom, scroll to the new message
+            if (chat.scrollHeight - chat.scrollTop <= chat.clientHeight + 100) {
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+        
+    </script>
+
+</body>
+</html>

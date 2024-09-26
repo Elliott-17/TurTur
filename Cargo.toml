@@ -1,0 +1,37 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+authors = ["elliotthipkiss@gmail.com"]
+
+[dependencies]
+warp = { version = "0.3.7", features = ["tls"] }
+tokio = { version = "1", features = ["full"] }
+futures-util = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.10.0", features = ["v4", "fast-rng"] }
+bcrypt = "0.15.1"
+dotenv = "0.15"
+reqwest = { version = "0.12.7", features = ["json"] }
+jsonwebtoken = { version = "8.3.0" }
+tokio-postgres = "0.7.11"
+log = "0.4.22"
+env_logger = "0.11.5"
+thiserror = "1.0.63"
+lazy_static = "1.4.0"
+rand = "0.8.5"
+hex = "0.4"
+aes = "0.8"
+cipher = { version = "0.4", features = ["block-padding"] }
+block-modes = "0.9.1"
+base64 = "0.22.1"
+rsa = "0.9.6"
+openssl = {version = "0.10.66", features = ["vendored"] }
+chrono = "0.4.38"
+r2d2 = "0.8.10"
+r2d2_sqlite = "0.25.0"
+sqlx = {version = "0.8.1", features = ["sqlite", "runtime-tokio-native-tls"] }
+tokio-rustls = "0.26.0"
+rustls = "0.21.12"
+rustls-pemfile = "2.1.3"

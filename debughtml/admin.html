@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Page</title>
+    <!-- Style to make all inputs aligned -->
+    <style>
+        input {
+            width: 70%;
+            margin: 10px;
+            overflow: scroll;
+        }
+        label {
+            width: 20%;
+            margin: 10px;
+            display: inline-block;
+        }
+        form {
+            width: 100%;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .form-group input {
+            flex: 1;
+        }
+        /* Styles for popup */
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            padding-top: 100px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .popup-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        #confirm-delete-account {
+            background-color: red;
+            color: white;
+        }
+        #cancel-delete-account {
+            background-color: green;
+            color: white;
+        }
+        .show {
+            display: block;
+        }
+        .secondbutton {
+            background-color: red;
+            color: white;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <h1>Admin Page</h1>
+
+    <!-- Scrollable div for a form for each user displaying username, email, id and a button to grant or revoke access -->
+    <div id="usersList" style="width: 30%; overflow-y: auto;">
+        <h2>User Management</h2>
+        <!-- User form template -->
+        <template id="userFormTemplate">
+            <form class="userForm">
+                <div style="height: 30px;">
+                    <label for="username">Username: ------</label>
+                    <input type="text" id="username" readonly style="float: right;">
+                </div>
+                <br>
+                <div style="height: 30px;">
+                    <label for="email">Email: ------</label>
+                    <input type="email" id="email" readonly style="float: right;">
+                </div>
+                <br>
+                <div style="height: 30px;">
+                    <label for="userId">User ID: ------</label>
+                    <input type="text" id="userId" readonly style="float: right;">
+                </div>
+                <br>
+                <div style="height: 30px;">
+                    <label for="ident">User Ident: ------</label>
+                    <input type="text" id="ident" readonly style="float: right;">
+                </div>
+                <br>
+                <button type="button" id="access-control"></button>
+                <button type="button" id="delete-account">Delete Account</button>
+                <hr>
+            </form>
+        </template>
+    </div>
+
+<!--    Make a popup for deleting accounts-->
+    <div class="popup" id="delete-account-popup">
+        <div class="popup-content">
+            <h2>Are you sure?</h2>
+            <p>Do you really want to delete the account <strong id="account-name-delete-popup">TEMPLATE</strong>? This action cannot be undone.</p>
+            <p>ID: <strong id="account-id-delete-popup"></strong></p>
+            <button id="confirm-delete-account">Yes, Delete</button>
+            <button id="cancel-delete-account">Cancel</button>
+        </div>
+    </div>
+
+
+<!--    Make a list of the servers allowing to see messages, users and delete the server-->
+    <div id="serverList" style="width: 30%; overflow-y: auto;">
+        <h2>Server Management</h2>
+        <!-- Server form template -->
+        <template id="serverFormTemplate">
+        <form class="serverForm">
+            <div class="form-group">
+                <label for="serverName">Server Name:</label>
+                <input type="text" id="serverName" readonly>
+            </div>
+            <div class="form-group">
+                <label for="serverId">Server ID:</label>
+                <input type="text" id="serverId" readonly>
+            </div>
+            <div class="form-group">
+                <label for="serverOwner">Server Owner:</label>
+                <input type="text" id="serverOwner" readonly>
+            </div>
+            <div class="form-group">
+                <label for="serverUsers">Server Users:</label>
+                <ul id="serverUsers">
+                </ul>
+            </div>
+            <button type="button" id="server-messages">Server-Messages</button>
+            <button type="button" id="delete-server" class="secondbutton">Delete Server</button>
+            <hr>
+        </form>
+    </template>
+    </div>
+
+
+<!--        Make a popup for displaying messages-->
+    <div class="popup" id="server-messages-popup">
+        <div class="popup-content">
+            <h2>Messages</h2>
+            <ul id="server-messages-list">
+            </ul>
+            <button id="close-messages">Close</button>
+        </div>
+    </div>
+
+<!--    Make a popup for deleting servers-->
+    <div class="popup" id="delete-server-popup">
+        <div class="popup-content">
+            <h2>Are you sure?</h2>
+            <p>Do you really want to delete the server <strong id="server-name-delete-popup">TEMPLATE</strong>? This action cannot be undone.</p>
+            <p>ID: <strong id="server-id-delete-popup"></strong></p>
+            <button id="confirm-delete-server">Yes, Delete</button>
+            <button id="cancel-delete-server">Cancel</button>
+        </div>
+    </div>
+
+
+    <script>
+
+        // Get session ID from cookie
+        const sessionId = document.cookie.split("=")[1];
+        // Get encryption key from session storage
+        const encryptionKey = sessionStorage.getItem("encryption_key");
+        const userId = sessionStorage.getItem("user_id");
+
+
+        // Fetch the list of users from the server
+        fetch("/users")
+            .then(response => response.json())
+            .then(users => {
+                // Populate the select element with user options
+                var usersList = document.getElementById("usersList");
+
+                // Get the user form template
+                var userFormTemplate = document.getElementById("userFormTemplate");
+
+                // Iterate over each user and create a form for each user
+                users.forEach(user => {
+                    // Clone the template content
+                    var userForm = userFormTemplate.content.cloneNode(true);
+
+                    // Set the values of the form elements
+                    userForm.querySelector("#username").value = user.username;
+                    userForm.querySelector("#email").value = user.email;
+                    userForm.querySelector("#userId").value = user.id;
+                    userForm.querySelector("#ident").value = user.ident;
+
+                    // If hasAccess is true, set the button to "Revoke Access"
+                    if (user.has_access) {
+                        userForm.querySelector("#access-control").textContent = "Revoke Access";
+                        // Set the button background color to red
+                        userForm.querySelector("#access-control").style.backgroundColor = "red";
+                        // Set the callback function to revoke access
+                        userForm.querySelector("#access-control").addEventListener("click", function(event) {
+                            // Make a POST request to /admin-control with the userId and grantAccess values
+                            connect_and_change_perms(user.id, false);
+                        });
+                    } else {
+                        // Do the opposite if hasAccess is false
+                        userForm.querySelector("#access-control").textContent = "Grant Access";
+                        userForm.querySelector("#access-control").style.backgroundColor = "green";
+
+                        userForm.querySelector("#access-control").addEventListener("click", function(event) {
+                            connect_and_change_perms(user.id, true);
+                        });
+                    }
+
+                    // Setup the delete account button
+                    userForm.querySelector("#delete-account").addEventListener("click", function(event) {
+                        // Get the username
+                        var username = user.username;
+                        // Set the account name in the popup
+                        document.getElementById("account-name-delete-popup").textContent = user.username;
+                        // Set the account ID in the popup
+                        document.getElementById("account-id-delete-popup").textContent = user.id;
+                        // Show the popup
+                        document.getElementById("delete-account-popup").classList.add("show");
+                    });
+
+                    // Append the user form to the users list
+                    usersList.appendChild(userForm);
+                });
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+
+        function getServerList() {
+            const socket = new WebSocket('ws://127.0.0.1:3030/ws');
+            socket.onopen = function() {
+                sendTTPP(18, "", socket);
+            };
+            socket.onmessage = async function(event) {
+                if (event.data instanceof Blob) {
+                    try {
+                        // Convert the Blob to ArrayBuffer
+                        const arrayBuffer = await event.data.arrayBuffer();
+
+                        // Create a Uint8Array from the ArrayBuffer
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Convert to string
+                        const text = new TextDecoder().decode(uint8Array);
+
+                        // First 36 bytes is the session ID
+                        const sessionId = text.slice(0, 36);
+
+                        // Ensure the session ID matches the one we sent
+                        if (sessionId !== sessionId) {
+                            console.error('Session ID mismatch');
+                            return;
+                        }
+
+                        // Remaining bytes is the encrypted data
+                        const remaining = decryptData(uint8Array.slice(36), encryptionKey);
+
+                        // First 16 bytes is the user ID
+                        const userIdBytes = remaining.slice(0, 16);
+                        const userId = new TextDecoder().decode(userIdBytes);
+
+                        // Ensure the user ID matches the one we sent
+                        if (userId !== userId) {
+                            console.error('User ID mismatch');
+                            return;
+                        }
+
+                        const messageBytes = remaining.slice(17);
+
+                        // Convert the message to a string
+                        const message = new TextDecoder().decode(messageBytes);
+                        const msg = JSON.parse(message);
+
+                        console.log(msg);
+
+                        // for each server, create the form
+                        msg.servers.forEach(server => {
+                            createServerForm(server);
+                        });
+                    } catch (error) {
+                        console.error('Error processing Blob:', error);
+                    }
+                } else {
+                    console.log('Received non-binary data:', event.data);
+                }
+            };
+        }
+
+        getServerList();
+
+        function createServerForm(server) {
+            // Clone the template content
+            var serverForm = serverFormTemplate.content.cloneNode(true);
+
+            // Set the values of the form elements
+            serverForm.querySelector("#serverName").value = server.name;
+            serverForm.querySelector("#serverId").value = server.id;
+            serverForm.querySelector("#serverOwner").value = server.owner;
+
+            // Get the server users list
+            var serverUsers = serverForm.querySelector("#serverUsers");
+
+            // Iterate over each user and create a list item for each user
+
+            // server.users is a string array in the format "["User1", "User2", ...]"
+            JSON.parse(server.users).forEach(user => {
+                var li = document.createElement("li");
+                li.textContent = user;
+                serverUsers.appendChild(li);
+            });
+
+
+            // Setup the delete server button
+            serverForm.querySelector("#delete-server").addEventListener("click", function(event) {
+                // Set the server name in the popup
+                document.getElementById("server-name-delete-popup").textContent = server.name;
+                // Set the server ID in the popup
+                document.getElementById("server-id-delete-popup").textContent = server.id;
+
+                // Show the popup
+                document.getElementById("delete-server-popup").classList.add("show");
+            });
+
+            // Setup the server messages button
+            // Encode the id in the button as an int
+            //convert the server id to an int
+            serverForm.querySelector("#server-messages").setAttribute("data-server-id", server.id);
+            serverForm.querySelector("#server-messages").addEventListener("click", function(event) {
+                // Get the server ID from the encoded value
+                var serverId = event.target.getAttribute("data-server-id");
+                // Get and display the server messages
+                console.log("Server ID: " + serverId);
+                getAndDisplayServerMessages(serverId);
+            });
+
+            // Append the server form to the server list
+            serverList.appendChild(serverForm);
+        }
+
+        // Setup close button for the delete account popup
+        document.getElementById("cancel-delete-account").addEventListener("click", function(event) {
+            document.getElementById("delete-account-popup").classList.remove("show");
+        });
+
+        // Setup the confirm delete account button
+        document.getElementById("confirm-delete-account").addEventListener("click", function(event) {
+            var userId = document.getElementById("account-id-delete-popup").textContent;
+            var data = {
+                "user_id": userId
+            };
+
+            console.log(data);
+
+            const socket = new WebSocket('ws://127.0.0.1:3030/ws');
+            socket.onopen = function() {
+                sendTTPP(16, JSON.stringify(data), socket);
+                // reload the page
+                location.reload();
+            };
+        });
+
+
+        function connect_and_change_perms(user_id_to_change, access) {
+            const socket = new WebSocket('ws://127.0.0.1:3030/ws');
+
+            // Setup json object to send to server
+            let json = {
+                "user_id": user_id_to_change,
+                "access": access
+            };
+
+            // Convert it to a string
+            json = JSON.stringify(json);
+
+            socket.onopen = function() {
+                sendTTPP(6, json, socket);
+            };
+
+            socket.onmessage = async function(event) {
+                if (event.data instanceof Blob) {
+                    try {
+                        // Convert the Blob to ArrayBuffer
+                        const arrayBuffer = await event.data.arrayBuffer();
+
+                        // Create a Uint8Array from the ArrayBuffer
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Convert to string
+                        const text = new TextDecoder().decode(uint8Array);
+
+                        // First 36 bytes is the session ID
+                        const sessionId = text.slice(0, 36);
+
+                        // Ensure the session ID matches the one we sent
+                        if (sessionId !== sessionId) {
+                            console.error('Session ID mismatch');
+                            return;
+                        }
+
+                        // Remaining bytes is the encrypted data
+                        const remaining = decryptData(uint8Array.slice(36), encryptionKey);
+
+                        // First 16 bytes is the user ID
+                        const userIdBytes = remaining.slice(0, 16);
+                        const userId = new TextDecoder().decode(userIdBytes);
+
+                        // Ensure the user ID matches the one we sent
+                        if (userId !== userId) {
+                            console.error('User ID mismatch');
+                            return;
+                        }
+
+                        const messageBytes = remaining.slice(17);
+
+                        // Convert the message to a string
+                        const message = new TextDecoder().decode(messageBytes);
+                        msg = JSON.parse(message);
+
+                        console.log(msg);
+
+                        // Check if the message is a success message {"success": true}
+
+                        if (msg.success) {
+                            // Reload the page
+                            location.reload();
+                        } else {
+                            alert("Failed to change permissions");
+                        }
+
+
+
+
+
+                    } catch (error) {
+                        console.error('Error processing Blob:', error);
+                    }
+                } else {
+                    console.log('Received non-binary data:', event.data);
+                }
+            };
+        }
+
+
+        function sendTTPP(type, data = '', socket) {
+
+            let sessionIdBytes = stringToByteArray(sessionId);
+            let userIdBytes = stringToByteArray(userId);
+            let packetTypeBytes = stringToByteArray(type);
+            let dataBytes = stringToByteArray(data);
+
+            let encrypted_payload = encryptData(concatenateByteArrays(userIdBytes, packetTypeBytes, dataBytes), encryptionKey);
+
+            let packet = concatenateByteArrays(sessionIdBytes, encrypted_payload);
+
+            socket.send(packet);
+
+        }
+
+        function encryptData(data, key) {
+            // Convert packet to a CryptoJS WordArray
+            const packetWordArray = CryptoJS.lib.WordArray.create(data);
+
+            // Convert the key to a CryptoJS WordArray
+            const keyWordArray = CryptoJS.enc.Utf8.parse(key);
+
+            // Encrypt the packet using AES-256-ECB
+            const encrypted = CryptoJS.AES.encrypt(packetWordArray, keyWordArray, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.NoPadding, // Ensure no padding is applied
+            });
+
+            // Convert the encrypted data back to a Uint8Array
+            return Uint8Array.from(encrypted.ciphertext.words.flatMap(word => [
+                (word >> 24) & 0xFF,
+                (word >> 16) & 0xFF,
+                (word >> 8) & 0xFF,
+                word & 0xFF
+            ]));
+        }
+
+        function stringToByteArray(str) {
+            const encoder = new TextEncoder(); // Using UTF-8 encoding
+            return encoder.encode(str);
+        }
+
+        function decryptData(data, key) {
+            // Convert packet to a CryptoJS WordArray
+            const packetWordArray = CryptoJS.lib.WordArray.create(data);
+
+            // Convert the key to a CryptoJS WordArray
+            const keyWordArray = CryptoJS.enc.Utf8.parse(key);
+
+            // Decrypt the packet using AES-256-ECB
+            const decrypted = CryptoJS.AES.decrypt({ ciphertext: packetWordArray }, keyWordArray, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            // Convert decrypted WordArray to a hexadecimal string
+            const decryptedHex = decrypted.toString(CryptoJS.enc.Hex);
+
+            // Convert hexadecimal string to a Uint8Array
+            const byteArray = new Uint8Array(decryptedHex.length / 2);
+            for (let i = 0; i < decryptedHex.length; i += 2) {
+                byteArray[i / 2] = parseInt(decryptedHex.substr(i, 2), 16);
+            }
+
+            return byteArray;
+        }
+
+        function concatenateByteArrays(...arrays) {
+            // Calculate the total length of all arrays
+            let totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+
+            // Create a new Uint8Array with the total length
+            let result = new Uint8Array(totalLength);
+
+            // Set each array into the result
+            let offset = 0;
+            for (let arr of arrays) {
+                result.set(arr, offset);
+                offset += arr.length;
+            }
+
+            return result;
+        }
+
+
+        function getAndDisplayServerMessages(serverId) {
+            const socket = new WebSocket('ws://127.0.0.1:3030/ws');
+            console.log("Server ID: " + serverId);
+            let data = {
+                "server_id": parseInt(serverId),
+                "known_messages": 0,
+            };
+            let json = JSON.stringify(data);
+            console.log(json);
+            socket.onopen = function () {
+                sendTTPP(2, json, socket);
+            };
+            socket.onmessage = async function (event) {
+                if (event.data instanceof Blob) {
+                    try {
+                        // Convert the Blob to ArrayBuffer
+                        const arrayBuffer = await event.data.arrayBuffer();
+
+                        // Create a Uint8Array from the ArrayBuffer
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Convert to string
+                        const text = new TextDecoder().decode(uint8Array);
+
+                        // First 36 bytes is the session ID
+                        const sessionId = text.slice(0, 36);
+
+                        // Ensure the session ID matches the one we sent
+                        if (sessionId !== sessionId) {
+                            console.error('Session ID mismatch');
+                            return;
+                        }
+
+                        // Remaining bytes is the encrypted data
+                        const remaining = decryptData(uint8Array.slice(36), encryptionKey);
+
+                        // First 16 bytes is the user ID
+                        const userIdBytes = remaining.slice(0, 16);
+                        const userId = new TextDecoder().decode(userIdBytes);
+
+                        // Ensure the user ID matches the one we sent
+                        if (userId !== userId) {
+                            console.error('User ID mismatch');
+                            return;
+                        }
+
+                        const messageBytes = remaining.slice(17);
+
+                        // Convert the message to a string
+                        const message = new TextDecoder().decode(messageBytes);
+                        const msg = JSON.parse(message);
+
+                        console.log(msg);
+
+                        popupwithmsges(msg.messages);
+
+                    } catch (error) {
+                        console.error('Error processing Blob:', error);
+                    }
+                } else {
+                    console.log('Received non-binary data:', event.data);
+                }
+            };
+        }
+
+        function popupwithmsges(messages) {
+            // Get the popup
+            var popup = document.getElementById("server-messages-popup");
+
+            // Get the list of messages
+            var messageList = document.getElementById("server-messages-list");
+
+            // Clear the list
+            messageList.innerHTML = "";
+
+            // Iterate over each message and create a list item for each message {“servers”, “messages”: [ {"id":1,"userid":"user123","userident":"John Doe","message":"Hello, world!",”timestamp”:”UTC Timestamp idk”}, …]}
+            messages.forEach(message => {
+                var li = document.createElement("li");
+                li.textContent = "ID: " + message.id + " " + message.userid + " " + message.userident + " (" + message.message + ") @" + message.timestamp;
+                messageList.prepend(li);
+            });
+
+            // Show the popup
+            popup.classList.add("show");
+        }
+
+        document.getElementById("close-messages").addEventListener("click", function(event) {
+            document.getElementById("server-messages-popup").classList.remove("show");
+        });
+
+        document.getElementById("cancel-delete-server").addEventListener("click", function(event) {
+            document.getElementById("delete-server-popup").classList.remove("show");
+        });
+
+        document.getElementById("confirm-delete-server").addEventListener("click", function(event) {
+            var serverId = document.getElementById("server-id-delete-popup").textContent;
+            var data = {
+                "server_id": parseInt(serverId)
+            };
+
+            console.log(data);
+            const socket = new WebSocket('ws://127.0.0.1:3030/ws');
+            socket.onopen = function () {
+                sendTTPP(20, JSON.stringify(data), socket);
+            };
+            socket.onmessage = async function (event) {
+                if (event.data instanceof Blob) {
+                    try {
+                        // Convert the Blob to ArrayBuffer
+                        const arrayBuffer = await event.data.arrayBuffer();
+
+                        // Create a Uint8Array from the ArrayBuffer
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Convert to string
+                        const text = new TextDecoder().decode(uint8Array);
+
+                        // First 36 bytes is the session ID
+                        const sessionId = text.slice(0, 36);
+
+                        // Ensure the session ID matches the one we sent
+                        if (sessionId !== sessionId) {
+                            console.error('Session ID mismatch');
+                            return;
+                        }
+
+                        // Remaining bytes is the encrypted data
+                        const remaining = decryptData(uint8Array.slice(36), encryptionKey);
+
+                        // First 16 bytes is the user ID
+                        const userIdBytes = remaining.slice(0, 16);
+                        const userId = new TextDecoder().decode(userIdBytes);
+
+                        // Ensure the user ID matches the one we sent
+                        if (userId !== userId) {
+                            console.error('User ID mismatch');
+                            return;
+                        }
+
+                        const messageBytes = remaining.slice(17);
+
+                        // Convert the message to a string
+                        const message = new TextDecoder().decode(messageBytes);
+                        msg = JSON.parse(message);
+
+                        console.log(msg);
+
+                        // Check if the message is a success message {"success": true}
+
+                        if (msg.success) {
+                            // Reload the page
+                            location.reload();
+                        } else {
+                            alert("Failed to delete server");
+                        }
+
+                    } catch (error) {
+                        console.error('Error processing Blob:', error);
+                    }
+                } else {
+                    console.log('Received non-binary data:', event.data);
+                }
+            };
+        });
+
+    </script>
+</body>
+</html>

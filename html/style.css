@@ -1,0 +1,459 @@
+/* Define color variables */
+:root {
+    --primary-color: #282828;
+    --secondary-color: #4a4d56;
+    --tertiary-color: #a2a2a2;
+    --dimmest-color: #568158;
+    --dimmer-color: #405240;
+    --accent-color: #EAF0ce;
+
+    --background-color: var(--primary-color);
+    --text-color: white;
+    --form-background-color: var(--secondary-color);
+    --form-button-background-color: var(--dimmest-color);
+    --form-button-hover-color: var(--dimmer-color);
+    --reset-button-color: var(--tertiary-color);
+    --reset-button-hover: #646464;
+    --google-button-color: #db4437;
+    --google-button-hover: #c23321;
+    --input-background-color: white;
+    --input-border-color: white;
+    --input-text-color: #333;
+    --button-background-color: var(--accent-color);
+    --button-hover-color: var(--dimmest-color);
+    --user-bar-background-color: var(--primary-color);
+    --user-background-color: var(--secondary-color);
+    --user-status-offline: red;
+    --user-status-online: #00ff00;
+    --room-background-color: var(--secondary-color);
+    --room-bar-background-color: var(--secondary-color);
+    --room-hover-background-color: var(--dimmest-color);
+    --room-active-background-color: var(--accent-color);
+    --chat-message-background-color: var(--primary-color);
+    --timestamp-color: #999;
+}
+
+/* General styling */
+body, html {
+    background-color: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    color: var(--text-color);
+    width: 100%;
+}
+
+h2, h3 {
+    font-family: monospace;
+    color: var(--text-color);
+}
+
+/* Form container styling */
+form {
+    background-color: var(--form-background-color);
+    color: var(--text-color);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
+}
+
+/* Input field styling */
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+/* Button styling */
+button {
+    padding: 10px;
+    background-color: var(--form-button-background-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+form button {
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: var(--form-button-hover-color);
+}
+
+/* Styling for the reset password and Google login buttons */
+#reset-password-email {
+    background-color: var(--reset-button-color);
+}
+
+#login-button-google1, #login-button-google2 {
+    background-color: var(--google-button-color);
+}
+
+#reset-password-email:hover,
+#login-button-google:hover {
+    background-color: var(--reset-button-hover);
+}
+
+#login-button-google1:hover, #login-button-google2:hover {
+    background-color: var(--google-button-hover);
+}
+
+.hide {
+    display: none;
+}
+
+.show {
+    display: flex;
+}
+
+.WindowTitle {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Chat application styling */
+.container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    background-color: var(--background-color);
+    overflow: hidden;
+}
+
+.user-bar {
+    width: 200px;
+    background-color: var(--user-bar-background-color);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid #444;
+}
+
+.logo-section img {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+}
+
+.logo {
+    width: 1000px;
+    height: 1000px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+.user-bar h2 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.user {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background-color: var(--user-background-color);
+    margin-bottom: 8px;
+    border-radius: 4px;
+    color: var(--text-color);
+    text-align: center;
+    height: 30px;
+}
+
+#users-list {
+    overflow-y: scroll;
+}
+
+.user p {
+    margin-top: 2%;
+    font-size: 18px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.user-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--user-status-offline);
+}
+
+.user.online .user-status {
+    background-color: var(--user-status-online);
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* Room bar styling */
+.room-bar {
+    background-color: var(--room-bar-background-color);
+    color: var(--text-color);
+    display: flex;
+    gap: 10px; /* Small gap between the buttons */
+    justify-content: left;
+    overflow-x: auto; /* Allow scrolling if the buttons overflow */
+    min-height: 60px;
+    border-bottom: var(--primary-color) 20px solid;
+}
+
+/* Room buttons styling */
+.room {
+    cursor: pointer;
+    padding: 10px;
+    flex-basis: 30%; /* Each room spans a maximum of 30% width */
+    text-align: center;
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: 0.2s;
+    max-width: 15%;
+    min-width: 6%;
+    height: 40px;
+    min-height: 40px;
+    font-size: 25px;
+}
+
+.room:hover {
+    background-color: var(--room-hover-background-color);
+}
+
+.room.active {
+    background-color: var(--tertiary-color);
+    // Make the active room stand out
+    font-weight: bold;
+    font-size: 30px;
+    scale: 1.075;
+}
+
+.notification {
+    color: red;
+    font-size: 20px;
+    position: static;
+    float: right;
+    display: none;
+/*    Always display ontop */
+    z-index: 1000;
+    top: -10px;
+    right: -10px;
+    width: 19px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.notification.show {
+    display: block;
+}
+
+.manage-button {
+    position: absolute;
+    font-size: 30px;
+    background-color: transparent;
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.5s;
+}
+
+#create-room-button {
+    right: 10px;
+}
+
+#settings-button {
+    right: 60px;
+}
+
+.manage-button:hover {
+    background-color: transparent;
+    transform: rotate(180deg); /* Spin effect */
+}
+
+/* Ensure dropdowns are in front of everything else */
+.dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute; /* Position it absolutely */
+    background-color: white; /* Background color */
+    min-width: 160px; /* Minimum width */
+    z-index: 1000; /* High z-index to be in front */
+    border-radius: 4px; /* Rounded corners */
+    overflow: hidden; /* Hide overflow */
+}
+
+.dropdown-content div {
+    color: black; /* Text color */
+    padding: 12px 16px; /* Padding */
+    text-decoration: none; /* No text decoration */
+    display: block; /* Block display */
+    background-color: white;
+}
+
+.dropdown-content div:hover {
+    background-color: #f1f1f1; /* Hover background color */
+}
+
+/* Chat window */
+.chat-window {
+    position: relative; /* Ensure the chat window is the positioning context */
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: scroll;
+    background-color: var(--room-background-color);
+}
+
+.chat-message {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: var(--chat-message-background-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    min-width: 50%;
+    max-width: 98%;
+    word-wrap: break-word; /* Ensures long words break and wrap */
+    word-break: break-word; /* Ensures long words break and wrap */
+}
+
+.chat-message img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+.chat-message .message-content {
+    margin: 0;
+    color: var(--text-color);
+    width: 100%;
+}
+
+.chat-message p {
+    margin: 0;
+    width: 90%;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timestamp {
+    font-size: 12px;
+    color: var(--timestamp-color);
+    margin-left: 10px;
+    position: absolute;
+    right: 3%;
+}
+
+.username {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.input-bar {
+    padding: 20px;
+    background-color: var(--form-background-color);
+    display: flex;
+    gap: 10px;
+}
+
+.input-bar input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid var(--input-border-color);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+
+/* Popup container */
+.popup {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+}
+
+/* Popup content */
+.popup-content {
+    background-color: var(--form-background-color);
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px; /* Maximum width */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Shadow effect */
+}
+
+/* Close button */
+.popup-content button {
+    background-color: var(--button-background-color); /* Green */
+    color: var(--primary-color);
+    padding: 10px 20px;
+    margin: 10px 0;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.popup-content button:hover {
+    background-color: var(--button-hover-color); /* Darker green */
+}
+
+.popup.show {
+    display: block;
+}
+
+.popup .popup-close {
+    position: relative;
+    float: right;
+    font-size: 40px;
+    color: var(--text-color);
+    cursor: pointer;
+    background-color: transparent;
+    margin: 0;
+    transition: 0.3s;
+}

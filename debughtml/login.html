@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TurTur</title>
+    <script type="module" src="/js/login.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<form id="login-form", class="show">
+    <h2 class = "WindowTitle">TurTur Login</h2>
+    <img src="/images/logo.png" alt="TurTur Logo">
+    <input type="email" id="email_login" placeholder="Email" required>
+    <input type="password" id="password_login" placeholder="Password" required>
+    <button id="login-with-email">Login</button>
+    <button id="signup-button">No Account? Sign up</button>
+    <button id="reset-password-email">Forgot password?</button>
+    <button id="login-button-google1">Sign in with Google</button>
+</form>
+
+<form id="signup-form" class="hide">
+    <h2 class = "WindowTitle">TurTur Login</h2>
+    <img src="/images/logo.png" alt="TurTur Logo">
+    <input type="email" id="email_signup" placeholder="Email" required>
+    <input type="password" id="password_signup" placeholder="Password" required>
+    <input type="password" id="confirm_password" placeholder="Confirm Password" required>
+    <button id="signup-with-email">Sign up</button>
+    <button id="login-button-1">Already have an account? Login</button>
+    <button id="login-button-google2">Sign in with Google</button>
+</form>
+
+<form id="reset-password-form" class="hide">
+    <h2 class = "WindowTitle">TurTur Login</h2>
+    <img src="/images/logo.png" alt="TurTur Logo">
+    <input type="email" id="email_reset" placeholder="Email" required>
+    <button id="reset-password" type="submit">Send Password Reset Email</button>
+    <button id="login-button-2">Back to Login</button>
+</form>
+</body>
+</html>

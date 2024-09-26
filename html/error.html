@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>An error has occured</title>
+    <style>
+        body {
+            background-color: #282828;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            height: 100vh; /* Set the height of the body to full viewport height */
+            overflow: hidden; /* Prevent scrolling */
+        }
+        h1 {
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        img {
+            width: 20vw;
+            height: 20vw;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #000000;
+            border-radius: 5vw;
+            border-width: 2px;
+            border-color: white;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            transition: all 0.3s; /* Add transition for smooth effect */
+        }
+
+        button:hover {
+            background-color: #333333; /* Change the background color to a slightly brighter shade */
+            transform: scale(1.05); /* Expand the button slightly */
+        }
+    </style>
+</head>
+<body>
+    <h1>Oops! Something went wrong</h1>
+    <img src="/images/error.png" alt="Error Image">
+    <br>
+    <button onclick="window.location.href = '/login';">Back to Login</button>
+</body>
+</html>
