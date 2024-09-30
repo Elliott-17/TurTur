@@ -28,4 +28,4 @@ Debug mode will host TurTur on localhost, without HTTPS.
 
 ## Artwork
 
-Artwork in the /images directory is made by SmileZ: https://www.instagram.com/theclowntoon/
+Artwork in the /images directory is made by Zo (Zhoe) Motherwell
